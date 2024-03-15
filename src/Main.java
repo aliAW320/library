@@ -2,16 +2,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 class DataHolder{
-    public HashMap <String,Library> nameAndId = new HashMap<>();
+    public HashMap <String,Library> libraryNameAndId = new HashMap<>();
     public ArrayList<Library> libraries = new ArrayList<>();
-
+    public HashMap <String,category> categoryIDtoName = new HashMap<>();
 
     public void setLibraries(Library newLibrary) {
         libraries.add(newLibrary);
     }
 
-    public void setNameAndId(String Id,Library NewLibrary) {
-        nameAndId.put(Id,NewLibrary);
+    public void setLibraryNameAndId(String Id,Library NewLibrary) {
+        libraryNameAndId.put(Id,NewLibrary);
+    }
+
+    public void setCategoryIDtoName(String id,category newCategory) {
+        categoryIDtoName.put(id,newCategory);
     }
 }
 class Library {
@@ -36,6 +40,11 @@ class Library {
 class category {
     String id;
     String name;
+    category(String id,String name ){
+        this.id=id;
+        this.name=name;
+    }
+
 }
 public class Main {
 
@@ -60,16 +69,22 @@ public static void findOrder(String order,DataHolder dataHolder){
     private static void addcategory(String order, DataHolder dataHolder) {
         String[] info = order.split("\\|");
         String [] id = info[0].split("\\#");
-
+        if(!(dataHolder.categoryIDtoName.containsKey(id[1]))){
+            dataHolder.setCategoryIDtoName(id[1],new category(id[1],info[1]));
+            System.out.println("success");
+        }
+        else {
+            System.out.println("duplicate-id");
+        }
     }
 
     private static void addLibrary(String order,DataHolder dataHolder) {
         String[] info = order.split("\\|");
         String[] id= info[0].split("\\#");
         boolean duplicate = false;
-        if(!(dataHolder.nameAndId.containsKey(id[1]))){
+        if(!(dataHolder.libraryNameAndId.containsKey(id[1]))){
             dataHolder.setLibraries(new Library(id[1],info[1],info[2],info[3],info[4]));
-            dataHolder.setNameAndId(id[1],dataHolder.libraries.get(dataHolder.libraries.size()-1));
+            dataHolder.setLibraryNameAndId(id[1],dataHolder.libraries.get(dataHolder.libraries.size()-1));
             System.out.println("success");
         }
         else{
