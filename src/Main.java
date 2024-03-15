@@ -1,6 +1,19 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
+class DataHolder{
+    public HashMap <String,Library> nameAndId = new HashMap<>();
+    public ArrayList<Library> libraries = new ArrayList<>();
+
+
+    public void setLibraries(Library newLibrary) {
+        libraries.add(newLibrary);
+    }
+
+    public void setNameAndId(String Id,Library NewLibrary) {
+        nameAndId.put(Id,NewLibrary);
+    }
+}
 class Library {
     String id;
     String name ;
@@ -20,34 +33,43 @@ class Library {
         return id;
     }
 }
-
+class category {
+    String id;
+    String name;
+}
 public class Main {
 
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
         String order="";
-        ArrayList<Library> libraries = new ArrayList<>();
-        HashMap <String,Library> nameAndId = new HashMap<>();
+        DataHolder dataHolder = new DataHolder();
         while (!(order.equals("finish"))){
             order= input.nextLine();
-            findOrder(order,libraries,nameAndId);
+            findOrder(order,dataHolder);
 
         }
     }
-public static void findOrder(String order, ArrayList<Library> libraries,HashMap <String,Library> nameAndId){
+public static void findOrder(String order,DataHolder dataHolder){
         if (order.contains("add-library")){
-            addLibrary(order,libraries,nameAndId);
+            addLibrary(order,dataHolder);
+        } else if (order.contains("add-category")) {
+            addcategory(order,dataHolder);
         }
 }
 
-    private static void addLibrary(String order, ArrayList<Library> libraries,HashMap <String,Library
-            > nameAndId) {
+    private static void addcategory(String order, DataHolder dataHolder) {
+        String[] info = order.split("\\|");
+        String [] id = info[0].split("\\#");
+
+    }
+
+    private static void addLibrary(String order,DataHolder dataHolder) {
         String[] info = order.split("\\|");
         String[] id= info[0].split("\\#");
         boolean duplicate = false;
-        if(!(nameAndId.containsKey(id[1]))){
-            libraries.add(new Library(id[1],info[1],info[2],info[3],info[4]));
-            nameAndId.put(id[1],libraries.get(libraries.size()-1));
+        if(!(dataHolder.nameAndId.containsKey(id[1]))){
+            dataHolder.setLibraries(new Library(id[1],info[1],info[2],info[3],info[4]));
+            dataHolder.setNameAndId(id[1],dataHolder.libraries.get(dataHolder.libraries.size()-1));
             System.out.println("success");
         }
         else{
