@@ -43,8 +43,11 @@ class Library {
     String address;
     // an array list store books id
     public ArrayList <String> booksId = new ArrayList<>();
+
     //an array list store books
     public ArrayList <Book> books = new ArrayList<>();
+    // a hashmap store id to books
+    HashMap<String,Book> Idtobooks = new HashMap<>();
 
     Library(String id,String name,String year,String numberOfDesk,String address){
         this.id=id;
@@ -57,12 +60,21 @@ class Library {
     public String getId() {
         return id;
     }
+    //if book didn't exist return true
     public boolean checkBookInLibrary(String id){
         return !booksId.contains(id);
     }
-    public void addBook(String Id,String name,String author,String publisher ,String year,int  number,String libraryId){
+    public void addBook(String Id,String name,String author,String publisher ,String year,int  number,
+                    category bookcategory,String libraryId){
         booksId.add(Id);
-        books.add(new Book(Id,name,author,publisher,year,number,libraryId));
+        books.add(new Book(Id,name,author,publisher,year,number,bookcategory,libraryId));
+        Idtobooks.put(Id,books.get(books.size()-1));
+    }
+
+    public void removeBookFromLibrary(String bookId) {
+        books.remove(Idtobooks.get(bookId));
+        booksId.remove(bookId);
+        Idtobooks.remove(bookId);
     }
 }
 class category {
@@ -81,18 +93,40 @@ class Book{
     String publisher;
     String year;
     int number;
+    category bookcategory;
     String libraryId;
-    Book(String Id,String name,String author,String publisher,String year,int number,String libraryId){
+    Book(String Id,String name,String author,String publisher,String year,int number,category bookcategory,String libraryId){
         this.Id=Id;
         this.name=name;
         this.author=author;
         this.publisher=publisher;
         this.year=year;
         this.number=number;
+        this.bookcategory=bookcategory;
         this.libraryId=libraryId;
     }
 
 
+    public static void edit(String[] info,Book book,DataHolder dataHolder) {
+        if(!info[2].equals("-")){
+            book.name=info[2];
+        }
+        if(!info[3].equals("-")){
+            book.author=info[3];
+        }
+        if(!info[4].equals("-")){
+            book.publisher=info[4];
+        }
+        if(!info[5].equals("-")){
+            book.year=info[5];
+        }
+        if(!info[6].equals("-")){
+            book.number=Integer.parseInt(info[6]);
+        }
+        if(!info[7].equals("-")){
+            book.bookcategory=dataHolder.categoryIDtoName.get(info[7]);
+        }
+    }
 }
 public class Main {
 
@@ -113,10 +147,51 @@ public static void findOrder(String order,DataHolder dataHolder){
             addcategory(order,dataHolder);
         } else if (order.contains("add-book")) {
             addbook(order,dataHolder);
+        } else if (order.contains("remove-book")) {
+            removeBook(order,dataHolder);
+        } else if (order.contains("edit-book")) {
+            editbook(order,dataHolder);
         }
 
 
 }
+
+    private static void editbook(String order, DataHolder dataHolder) {
+        String[] info = order.split("\\|");
+        String[] id = info[0].split("\\#");
+        if(dataHolder.checkLibraryExist(info[1])){
+            Library lib= dataHolder.IdTolibrary.get(info[1]);
+            if(!lib.checkBookInLibrary(id[1])){
+                Book book =lib.Idtobooks.get(id[1]);
+                Book.edit(info,book,dataHolder);
+                System.out.println("success");
+            }
+            else{
+                System.out.println("not-found");
+            }
+        }
+        else{
+            System.out.println("not-found");
+        }
+    }
+
+    private static void removeBook(String order, DataHolder dataHolder) {
+        String[] info = order.split("\\|");
+        String[] id = info[0].split("\\#");
+        if(dataHolder.IdTolibrary.containsKey(info[1])){
+            Library lib= dataHolder.IdTolibrary.get(info[1]);
+            if(!lib.checkBookInLibrary(id[1])){
+            lib.removeBookFromLibrary(id[1]);
+            System.out.println("success");
+            }
+            else {
+                System.out.println("not-found");
+            }
+        }
+        else{
+            System.out.println("not-found");
+        }
+    }
 
     private static void addbook(String order, DataHolder dataHolder) {
         String[] info = order.split("\\|");
@@ -125,7 +200,8 @@ public static void findOrder(String order,DataHolder dataHolder){
             if (info[info.length - 2].equals("null")) {
                 if (dataHolder.IdTolibrary.get(info[info.length - 1]).checkBookInLibrary(id[1])) {
                     dataHolder.IdTolibrary.get(info[info.length - 1]).addBook(id[1],
-                            info[1], info[2], info[3], info[4], Integer.parseInt(info[5]), info[6]);
+                            info[1], info[2], info[3], info[4], Integer.parseInt(info[5]),
+                            dataHolder.categoryIDtoName.get(info[6]),info[7]);
                     System.out.println("success");
                 } else {
                     System.out.println("duplicate-id");
@@ -133,14 +209,15 @@ public static void findOrder(String order,DataHolder dataHolder){
             } else if (dataHolder.checkCategoryExist(info[info.length - 2])) {
                 if (dataHolder.IdTolibrary.get(info[info.length - 1]).checkBookInLibrary(id[1])) {
                     dataHolder.IdTolibrary.get(info[info.length - 1]).addBook(id[1],
-                            info[1], info[2], info[3], info[4], Integer.parseInt(info[5]), info[6]);
+                            info[1], info[2], info[3], info[4], Integer.parseInt(info[5]),
+                            dataHolder.categoryIDtoName.get(info[6]) ,info[7]);
                     System.out.println("success");
 
                 } else {
                     System.out.println("duplicate-id");
                 }
             } else {
-                System.out.println("not-find");
+                System.out.println("not-found");
             }
 
         }
