@@ -10,8 +10,8 @@ class DataHolder{
     public HashMap <String,category> categoryIDtoName = new HashMap<>();
     // reaching from a name of category to the category him self
     public HashMap <String,category> NametoCategory = new HashMap<>();
-    // all books in a
-
+    //null category
+    category nullcategory = new category(null,null);
 
 
 
@@ -27,7 +27,7 @@ class DataHolder{
         categoryIDtoName.put(id,newCategory);
     }
     public boolean checkLibraryExist(String id){
-        return IdTolibrary.get(id) != null;
+        return IdTolibrary.get(id) != null||id.equals("null");
     }
 
     public boolean checkCategoryExist(String id) {
@@ -76,15 +76,26 @@ class Library {
         booksId.remove(bookId);
         Idtobooks.remove(bookId);
     }
+
+    public Book giveBook(String id) {
+       return Idtobooks.get(id);
+    }
 }
 class category {
     String id;
     String name;
+    ArrayList <Book> books = new ArrayList<>();
     category(String id,String name ){
         this.id=id;
         this.name=name;
     }
 
+    public void setBooks(Book book) {
+        books.add(book);
+    }
+    public void removebook(Book book){
+        books.remove(book);
+    }
 }
 class Book{
     String Id;
@@ -124,7 +135,16 @@ class Book{
             book.number=Integer.parseInt(info[6]);
         }
         if(!info[7].equals("-")){
-            book.bookcategory=dataHolder.categoryIDtoName.get(info[7]);
+            if(info[7].equals("null")){
+                book.bookcategory.removebook(book);
+                book.bookcategory= dataHolder.nullcategory;
+                dataHolder.nullcategory.setBooks(book);
+            }
+            else{
+                book.bookcategory.removebook(book);
+                book.bookcategory=dataHolder.categoryIDtoName.get(info[7]);
+                dataHolder.nullcategory.setBooks(book);
+            }
         }
     }
 }
@@ -181,6 +201,13 @@ public static void findOrder(String order,DataHolder dataHolder){
         if(dataHolder.IdTolibrary.containsKey(info[1])){
             Library lib= dataHolder.IdTolibrary.get(info[1]);
             if(!lib.checkBookInLibrary(id[1])){
+                Book book = lib.giveBook(id[1]);
+                if(book.bookcategory==dataHolder.nullcategory){
+                    dataHolder.nullcategory.removebook(book);
+                }
+                else {
+                    book.bookcategory.removebook(book);
+                }
             lib.removeBookFromLibrary(id[1]);
             System.out.println("success");
             }
@@ -201,7 +228,7 @@ public static void findOrder(String order,DataHolder dataHolder){
                 if (dataHolder.IdTolibrary.get(info[info.length - 1]).checkBookInLibrary(id[1])) {
                     dataHolder.IdTolibrary.get(info[info.length - 1]).addBook(id[1],
                             info[1], info[2], info[3], info[4], Integer.parseInt(info[5]),
-                            dataHolder.categoryIDtoName.get(info[6]),info[7]);
+                            dataHolder.nullcategory,info[7]);
                     System.out.println("success");
                 } else {
                     System.out.println("duplicate-id");
