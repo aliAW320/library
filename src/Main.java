@@ -1,7 +1,7 @@
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Scanner;
 class Library {
     String id;
@@ -20,11 +20,9 @@ class Library {
     ArrayList <Thesis> thesises = new ArrayList<>();
     //a hashmap store id to thesises
     HashMap <String,Thesis> idtothesises = new HashMap<>();
-    // a list of borrowed book
-    ArrayList <Book> borrowedbook = new ArrayList<>();
-    // a list of borrowed thesis
-    ArrayList <Thesis> borrowedThesis = new ArrayList<>();
-    HashMap<Thesis,LocalDateTime> borrowthesisAndtime = new HashMap<>();
+    ArrayList<Book> booksinborrow = new ArrayList<>();
+    ArrayList <Thesis> thesisInBorrow = new ArrayList<>();
+
     Library(String id,String name,String year,String numberOfDesk,String address){
         this.id=id;
         this.name=name;
@@ -88,44 +86,102 @@ class Library {
         String[] fulltime= time.split("\\:");
         LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
                 Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        borrowedbook.add(book);
-        dataHolder.addBorrowBookStudent(book,student,dateTime);
+        booksinborrow.add(book);
+        BorrowBook borrowBook = new BorrowBook(dateTime,book,student);
+        book.addinrent();
+        student.borrow++;
+        student.borrowedBookadd(book);
+        dataHolder.setBorrowbook(book,borrowBook);
     }
 
-    public void borrowThesisStudent(Thesis thesis, Student student, String date, String time) {
+    public void borrowThesisStudent(Thesis thesis, Student student, String date, String time, DataHolder dataHolder)
+    {
         String[] fulldate = date.split("\\-");
         String[] fulltime= time.split("\\:");
         LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
                 Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        borrowedThesis.add(thesis);
-        borrowthesisAndtime.put(thesis,dateTime);
+        thesisInBorrow.add(thesis);
+        thesis.canBorrow=false;
+        student.borrow++;
+        ThesisBorrow thesisBorrow = new ThesisBorrow(dateTime,thesis,student);
+        dataHolder.addThesisBorrow(thesis,thesisBorrow);
         student.thesesinBorrow.add(thesis);
-        student.thesisAndTime.put(thesis,dateTime);
-        student.addBorrownum();
-        thesis.borrowed();
-
     }
 
-    public void borrowBookStaff(Book book, Staff staff, String date, String time,DataHolder dataHolder) {
+    public void borrowBookStaff(Book book, Staff staff, String date, String time, DataHolder dataHolder) {
         String[] fulldate = date.split("\\-");
         String[] fulltime= time.split("\\:");
         LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
                 Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        borrowedbook.add(book);
-        dataHolder.addBorrowBookStaff(book,staff,dateTime);
+        booksinborrow.add(book);
+        BorrowBook borrowBook = new BorrowBook(dateTime,book,staff);
+        book.addinrent();
+        staff.inborrow++;
+        dataHolder.setBorrowbook(book,borrowBook);
+        staff.borrowedBookadd(book);
+
     }
 
-    public void borrowThesisStaff(Thesis thesis, Staff staff, String date, String time) {
+    public void borrowThesisStaff(Thesis thesis, Staff staff, String date, String time, DataHolder dataHolder) {
         String[] fulldate = date.split("\\-");
         String[] fulltime= time.split("\\:");
         LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
                 Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        borrowedThesis.add(thesis);
-        borrowthesisAndtime.put(thesis,dateTime);
+        thesisInBorrow.add(thesis);
+        thesis.canBorrow=false;
+        staff.inborrow++;
+        ThesisBorrow thesisBorrow = new ThesisBorrow(dateTime,thesis,staff);
+        dataHolder.addThesisBorrow(thesis,thesisBorrow);
         staff.thesesinBorrow.add(thesis);
-        staff.thesisAndTime.put(thesis,dateTime);
-        staff.addBorrownum();
-        thesis.borrowed();
+
+    }
+
+    public void returnBookStudent(Book book, Student student, String date, String time, DataHolder dataHolder) {
+        String[] fulldate = date.split("\\-");
+        String[] fulltime= time.split("\\:");
+        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
+                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
+        booksinborrow.remove(book);
+        book.removeFromRent();
+        student.borrow--;
+        student.borrowedBookremove(book);
+        dataHolder.removeBorrowBookStudent(book,student,dateTime);
+    }
+
+    public void returnThesisStudent(Thesis thesis, Student student, String date, String time, DataHolder dataHolder) {
+        String[] fulldate = date.split("\\-");
+        String[] fulltime= time.split("\\:");
+        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
+                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
+        thesisInBorrow.remove(thesis);
+        thesis.canBorrow=true;
+        student.borrow--;
+        student.thesesinBorrow.remove(thesis);
+        dataHolder.removeBorrowThesisStudent(thesis,student,dateTime);
+    }
+
+    public void returnBookStaff(Book book, Staff staff, String date, String time, DataHolder dataHolder) {
+        String[] fulldate = date.split("\\-");
+        String[] fulltime= time.split("\\:");
+        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
+                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
+        booksinborrow.remove(book);
+        book.removeFromRent();
+        staff.inborrow--;
+        staff.borrowedBookremove(book);
+        dataHolder.removeBorrowBookStaff(book,staff,dateTime);
+    }
+
+    public void returnThesisStaff(Thesis thesis, Staff staff, String date, String time, DataHolder dataHolder) {
+        String[] fulldate = date.split("\\-");
+        String[] fulltime= time.split("\\:");
+        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
+                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
+        thesisInBorrow.remove(thesis);
+        thesis.canBorrow=true;
+        staff.inborrow--;
+        staff.thesesinBorrow.remove(thesis);
+        dataHolder.removeBorrowThesisStaff(thesis,staff,dateTime);
     }
 }
 class DataHolder{
@@ -143,11 +199,13 @@ class DataHolder{
     private HashMap<String,Student> IdtoStudent = new HashMap<>();
     // a list of Students
     private ArrayList<Student> students = new ArrayList<>();
-    // a hashmap store id and staff
+    // a hashmap store id and student
     private HashMap<String,Staff> IdtoStaffe = new HashMap<>();
-    // a list of staff
+    // a list of Students
     private ArrayList<Staff> staffes = new ArrayList<>();
-    public LinkedList<BorrowBook> borrowBooks= new LinkedList<BorrowBook>();
+
+    private HashMap<String,ArrayList<BorrowBook>> IdBorrowBook = new HashMap<>();
+    private HashMap<String,ArrayList<ThesisBorrow>> IdBorrowThesis = new HashMap<>();
 
     public void setLibraries(Library newLibrary) {
         libraries.add(newLibrary);
@@ -213,43 +271,154 @@ class DataHolder{
         IdtoStaffe.remove(staff.getId(staff));
     }
 
-    public void addBorrowBookStudent(Book book, Student student, LocalDateTime dateTime) {
-        BorrowBook borrowBook = new BorrowBook(dateTime,book,student);
-        if(borrowBooks.isEmpty()){
-            borrowBooks.add(borrowBook);
-            student.borrowed(book);
-            book.addborrownum();
-
-            return;
+    public void setBorrowbook(Book book, BorrowBook borrowBook) {
+        if(IdBorrowBook.containsKey(book.Id)){
+            IdBorrowBook.get(book.Id).add(borrowBook);
         }
-        for (int i=0 ; i<borrowBooks.size();i++){
-            if(dateTime.compareTo(borrowBooks.get(i).getBorrowDate())==1){
-                borrowBooks.add(i,borrowBook);
-                student.borrowed(book);
-                book.addborrownum();
-            }
+        else{
+            IdBorrowBook.put(book.Id,new ArrayList<BorrowBook>());
+            IdBorrowBook.get(book.Id).add(borrowBook);
+
         }
     }
 
-    public void addBorrowBookStaff(Book book, Staff staff, LocalDateTime dateTime) {
-        BorrowBook borrowBook = new BorrowBook(dateTime,book,staff);
-        if(borrowBooks.isEmpty()){
-            borrowBooks.add(borrowBook);
-            staff.borrowed(book);
-            book.addborrownum();
-
-            return;
+    public void addThesisBorrow(Thesis thesis,ThesisBorrow thesisBorrow) {
+        if(IdBorrowThesis.containsKey(thesis.id)){
+            IdBorrowThesis.get(thesis.id).add(thesisBorrow);
         }
-        for (int i=0 ; i<borrowBooks.size();i++){
-            if(dateTime.compareTo(borrowBooks.get(i).getBorrowDate())==1){
-                borrowBooks.add(i,borrowBook);
-                staff.borrowed(book);
-                book.addborrownum();
+        else{
+            IdBorrowThesis.put(thesis.id,new ArrayList<ThesisBorrow>());
+            IdBorrowThesis.get(thesis.id).add(thesisBorrow);
 
+        }
+    }
+
+    public void removeBorrowBookStudent(Book book, Student student, LocalDateTime dateTime) {
+        ArrayList<BorrowBook> borrowBooks = IdBorrowBook.get(book.Id);
+        long hours=1000 ;
+        BorrowBook borrowBooktarget = null;
+        for(BorrowBook i : borrowBooks){
+            if(i.getStudent()!=null){
+                if((i.getStudent().equals(student))&&(i.getBook().library.equals(book.library))&&
+                        (Duration.between(i.getBorrowDate(),dateTime)).toHours()>=0){
+                    if((Duration.between(i.getBorrowDate(),dateTime)).toHours()<hours){
+                        hours=(Duration.between(i.getBorrowDate(),dateTime)).toHours();
+                        borrowBooktarget=i;
+                    }
+                }
             }
+
+        }
+        borrowBooks.remove(borrowBooktarget);
+        if(IdBorrowBook.get(book.Id).isEmpty()){
+            IdBorrowBook.remove(book.Id);
+        }
+        if(hours>240){
+            long penalty= (hours-240)*50;
+            student.penalty=+ penalty;
+            System.out.println(penalty);
+        }
+        else {
+            System.out.println("success");
+        }
+    }
+
+    public void removeBorrowThesisStudent(Thesis thesis, Student student, LocalDateTime dateTime) {
+        ArrayList<ThesisBorrow> thesisBorrows = IdBorrowThesis.get(thesis.id);
+        long hours=1000 ;
+        ThesisBorrow thesisBorrowtarget = null;
+        for(ThesisBorrow i : thesisBorrows){
+            if(i.getStudent()!=null){
+                if(i.getStudent().equals(student)&&i.getThesis().library.equals(thesis.library)&&
+                        (Duration.between(i.getBorrowDate(),dateTime)).toHours()>=0){
+                    if((Duration.between(i.getBorrowDate(),dateTime)).toHours()<hours){
+                        hours=(Duration.between(i.getBorrowDate(),dateTime)).toHours();
+                        thesisBorrowtarget=i;
+                    }
+                }
+            }
+
+        }
+        thesisBorrows.remove(thesisBorrowtarget);
+        if(IdBorrowThesis.get(thesis.id).isEmpty()){
+            IdBorrowThesis.remove(thesis.id);
+        }
+
+        if(hours>168){
+            long penalty= (hours-168)*50;
+            student.penalty=+ penalty;
+
+            System.out.println(penalty);
+        }
+        else {
+            System.out.println("success");
+        }
+    }
+
+    public void removeBorrowBookStaff(Book book, Staff staff, LocalDateTime dateTime) {
+        ArrayList<BorrowBook> borrowBooks = IdBorrowBook.get(book.Id);
+        long hours=1000 ;
+        BorrowBook borrowBooktarget = null;
+        for(BorrowBook i : borrowBooks){
+            if(i.getStaff()!=null){
+                if(i.getStaff().equals(staff)&&i.getBook().library.equals(book.library)&&
+                        (Duration.between(i.getBorrowDate(),dateTime)).toHours()>0){
+                    if((Duration.between(i.getBorrowDate(),dateTime)).toHours()<hours){
+                        hours=(Duration.between(i.getBorrowDate(),dateTime)).toHours();
+                        borrowBooktarget=i;
+                    }
+                }
+            }
+
+        }
+        borrowBooks.remove(borrowBooktarget);
+        if(IdBorrowBook.get(book.Id).isEmpty()){
+            IdBorrowBook.remove(book.Id);
+        }
+        if(hours>336){
+            long penalty= (hours-336)*100;
+            staff.penalty=+ penalty;
+
+            System.out.println(penalty);
+        }
+        else {
+            System.out.println("success");
+        }
+    }
+
+    public void removeBorrowThesisStaff(Thesis thesis, Staff staff, LocalDateTime dateTime) {
+        ArrayList<ThesisBorrow> thesisBorrows = IdBorrowThesis.get(thesis.id);
+        long hours=1000 ;
+        ThesisBorrow thesisBorrowtarget = null;
+        for(ThesisBorrow i : thesisBorrows){
+            if(i.getStaff()!=null){
+                if(i.getStaff().equals(staff)&&i.getThesis().library.equals(thesis.library)&&
+                        (Duration.between(i.getBorrowDate(),dateTime)).toHours()>=0){
+                    if((Duration.between(i.getBorrowDate(),dateTime)).toHours()<hours){
+                        hours=(Duration.between(i.getBorrowDate(),dateTime)).toHours();
+                        thesisBorrowtarget=i;
+                    }
+                }
+            }
+
+        }
+        thesisBorrows.remove(thesisBorrowtarget);
+        if(IdBorrowThesis.get(thesis.id).isEmpty()){
+            IdBorrowThesis.remove(thesis.id);
+        }
+
+        if(hours>240){
+            long penalty= (hours-240)*100;
+            staff.penalty=+ penalty;
+
+            System.out.println(penalty);
+        }
+        else {
+            System.out.println("success");
         }
     }
 }
+
 class BorrowBook{
     private LocalDateTime borrowDate;
     private Book book;
@@ -269,6 +438,17 @@ class BorrowBook{
 
     public LocalDateTime getBorrowDate() {
         return borrowDate;
+    }
+    public Book getBook (){
+        return book;
+    }
+
+    public Object getStudent() {
+        return student;
+    }
+
+    public Object getStaff() {
+        return staff;
     }
 }
 class category {
@@ -305,7 +485,7 @@ class Book{
     int number;
     category bookcategory;
     Library library;
-    int inBorrow=0;
+    int inborrow = 0;
     Book(String Id,String name,String author,String publisher,String year,int number,category bookcategory,Library library){
         this.Id=Id;
         this.name=name;
@@ -348,12 +528,16 @@ class Book{
         }
     }
 
-    public boolean canBorrow() {
-        return number>inBorrow;
+    public void addinrent() {
+        inborrow++;
     }
 
-    public void addborrownum() {
-        inBorrow++;
+    public boolean canborrow() {
+        return inborrow<number;
+    }
+
+    public void removeFromRent() {
+        inborrow--;
     }
 }
 class Thesis {
@@ -414,10 +598,6 @@ class Thesis {
     public boolean canBorrow() {
         return canBorrow;
     }
-
-    public void borrowed() {
-        canBorrow=false;
-    }
 }
 class Student{
     String Id;
@@ -426,17 +606,11 @@ class Student{
     String nationalCode;
     int year;
     String address;
-    private int borrowed=0 ;
-    //Store borrowed book
-    ArrayList <Book> bookinBorrow = new ArrayList<>();
-    // store brrowed thesis
-    ArrayList <Thesis> thesesinBorrow = new ArrayList<>();
-    //store borrowed book and time
-    HashMap<Book,LocalDateTime> bookAndTime = new HashMap<>();
-    // store borrowed thesis and time
-    HashMap <Thesis,LocalDateTime> thesisAndTime = new HashMap<>();
-    // a linked list that store duplicate borrow book
-    LinkedList <Book> duplicatebook = new LinkedList<>();
+    int borrow=0 ;
+    public long penalty = 0;
+    ArrayList<Book> bookinborrow = new ArrayList<>();
+    ArrayList<Thesis> thesesinBorrow = new ArrayList<>();
+
     Student(String Id,String password,String name,String family,String nationalCode,int year,String address){
         this.Id=Id;
         this.password=password;
@@ -476,18 +650,25 @@ class Student{
     public boolean checkpass(String pass) {
         return pass.equals(password);
     }
-    public boolean canBorrow() {
-        return 3> borrowed;
+
+    public boolean canBorrow(Student student) {
+        return borrow<3;
     }
 
-
-    public void borrowed(Book book) {
-        bookinBorrow.add(book);
-        borrowed++;
+    public void borrowedBookadd(Book book) {
+        bookinborrow.add(book);
     }
 
-    public void addBorrownum() {
-        borrowed++;
+    public boolean checkBorrow(Book book) {
+        return bookinborrow.contains(book);
+    }
+
+    public void borrowedBookremove(Book book) {
+        bookinborrow.remove(book);
+    }
+
+    public boolean checkBorrow(Thesis thesis) {
+        return thesesinBorrow.contains(thesis);
     }
 }
 
@@ -498,15 +679,10 @@ class Staff{
     String nationalCode;
     int year;
     String address;
-    private int borrowed=0 ;
-    //Store borrowed book
-    ArrayList <Book> bookinBorrow = new ArrayList<>();
-    // store brrowed thesis
+    public int inborrow=0;
+    public long penalty = 0;
+    ArrayList<Book> borrowBook = new ArrayList<>();
     ArrayList <Thesis> thesesinBorrow = new ArrayList<>();
-    // store borrowed thesis and time
-    HashMap <Thesis,LocalDateTime> thesisAndTime = new HashMap<>();
-    // a linked list that store duplicate borrow book
-
     Staff(String Id,String password,String name,String family,String nationalCode,int year,String address){
         this.Id=Id;
         this.password=password;
@@ -545,19 +721,55 @@ class Staff{
         return pass.equals(password);
     }
 
-
     public boolean canBorrow() {
-        return 5> borrowed;
+        return inborrow<5;
     }
 
-    public void borrowed(Book book) {
-        bookinBorrow.add(book);
-        borrowed++;
-
+    public void borrowedBookadd(Book book) {
+        borrowBook.add(book);
     }
 
-    public void addBorrownum() {
-        borrowed++;
+    public boolean checkBorrow(Book book) {
+        return borrowBook.contains(book);
+    }
+
+    public void borrowedBookremove(Book book) {
+        borrowBook.remove(book);
+    }
+
+    public boolean checkBorrow(Thesis thesis) {
+        return thesesinBorrow.contains(thesis);
+    }
+}
+class ThesisBorrow{
+    Thesis thesis;
+    Student student;
+    Staff staff;
+    LocalDateTime borrowDate;
+    ThesisBorrow (LocalDateTime borrowDate,Thesis thesis,Student student){
+        this.borrowDate=borrowDate;
+        this.student=student;
+        this.thesis=thesis;
+    }
+    ThesisBorrow(LocalDateTime borrowDate,Thesis thesis,Staff staff){
+        this.borrowDate=borrowDate;
+        this.staff=staff;
+        this.thesis= thesis;
+    }
+
+    public LocalDateTime getBorrowDate() {
+        return borrowDate;
+    }
+    public Thesis getThesis (){
+        return thesis;
+    }
+
+    public Object getStudent() {
+        return student;
+    }
+
+    public Object getStaff() {
+        return staff;
     }
 }
 public class Main {
@@ -607,12 +819,90 @@ public class Main {
             editStaff(order,dataHolder);
         } else if (order.startsWith("remove-staff")) {
             removeStaff(order,dataHolder);
-        } else if (order.startsWith("borrow")) {
+        } else if(order.startsWith("borrow")){
             borrow(order,dataHolder);
+        } else if (order.startsWith("return")) {
+            BorrowReturn(order,dataHolder);
         }
-
     }
 
+    private static void BorrowReturn(String order, DataHolder dataHolder) {
+        String[] info = order.split("\\|");
+        String[] id = info[0].split("\\#");
+        if (dataHolder.checkStudentExist(id[1])) {
+            Student student = dataHolder.getStudent(id[1]);
+            if (!student.checkpass(info[1])) {
+                System.out.println("invalid-pass");
+                return;
+            }
+            if (!dataHolder.checkLibraryExist(info[2])) {
+                System.out.println("not-found");
+                return;
+            }
+            Library lib = dataHolder.IdTolibrary.get(info[2]);
+            if (lib.checkThesisInLibrary(info[3]) && lib.checkBookInLibrary(info[3])) {
+                System.out.println("not-found");
+                return;
+            }
+            else if (!lib.checkBookInLibrary(info[3])) {
+                Book book = lib.giveBook(info[3]);
+                if(!student.checkBorrow(book)){
+                    System.out.println("not-found");
+                    return;
+                }
+                lib.returnBookStudent(book,student,info[4],info[5],dataHolder);
+
+            } else {
+                Thesis thesis = lib.giveThesis(info[3]);
+                if(!student.checkBorrow(thesis)){
+                    System.out.println("not-found");
+                    return;
+                }
+                lib.returnThesisStudent(thesis,student,info[4],info[5],dataHolder);
+            }
+
+        }
+        //check staff
+        else if (dataHolder.checkStaffExist(id[1])) {
+            Staff staff = dataHolder.getStaff(id[1]);
+            if(!staff.checkpass(info[1])){
+                System.out.println("invalid-pass");
+                return;
+            }
+            if (!dataHolder.checkLibraryExist(info[2])) {
+                System.out.println("not-found");
+                return;
+            }
+            Library lib = dataHolder.IdTolibrary.get(info[2]);
+            if (lib.checkThesisInLibrary(info[3]) && lib.checkBookInLibrary(info[3])) {
+                System.out.println("not-found");
+                return;
+            }
+            else if (!lib.checkBookInLibrary(info[3])) {
+                Book book = lib.giveBook(info[3]);
+                if(!staff.checkBorrow(book)){
+                    System.out.println("not-found");
+                    return;
+                }
+                lib.returnBookStaff(book,staff,info[4],info[5],dataHolder);
+
+            } else {
+                Thesis thesis = lib.giveThesis(info[3]);
+                if(!staff.checkBorrow(thesis)){
+                    System.out.println("not-found");
+                    return;
+                }
+                lib.returnThesisStaff(thesis,staff,info[4],info[5],dataHolder);
+            }
+
+        }
+        else {
+            System.out.println("not-found");
+            return;
+        }
+
+
+    }
     private static void borrow(String order, DataHolder dataHolder) {
         String[] info = order.split("\\|");
         String[] id = info[0].split("\\#");
@@ -629,12 +919,12 @@ public class Main {
             }
             Library lib = dataHolder.IdTolibrary.get(info[2]);
             if(lib.checkThesisInLibrary(info[3]) && lib.checkBookInLibrary(info[3])){
-                System.out.println("not found");
+                System.out.println("not-found");
                 return;
             }
             else if(!lib.checkBookInLibrary(info[3])){
-                if(student.canBorrow()){
-                    Book book = lib.giveBook(info[3]);
+                Book book = lib.giveBook(info[3]);
+                if(student.canBorrow(student)&&book.canborrow()){
                     lib.borrowBookStudent(book,student,info[4],info[5],dataHolder);
                     System.out.println("success");
                 }
@@ -642,10 +932,10 @@ public class Main {
                     System.out.println("not-allowed");
                 }
 
-            } else if (lib.checkThesisInLibrary(info[3])) {
+            } else if (!lib.checkThesisInLibrary(info[3])) {
                 Thesis thesis = lib.giveThesis(info[3]);
-                if (student.canBorrow()){
-                    lib.borrowThesisStudent(thesis,student,info[4], info [5]);
+                if (student.canBorrow(student)&&thesis.canBorrow()){
+                    lib.borrowThesisStudent(thesis,student,info[4], info [5],dataHolder);
                     System.out.println("success");
                 }
                 else{
@@ -669,12 +959,12 @@ public class Main {
             }
             Library lib = dataHolder.IdTolibrary.get(info[2]);
             if(lib.checkThesisInLibrary(info[3]) && lib.checkBookInLibrary(info[3])){
-                System.out.println("not found");
+                System.out.println("not-found");
                 return;
             }
             else if(!lib.checkBookInLibrary(info[3])){
-                if(staff.canBorrow()){
-                    Book book = lib.giveBook(info[3]);
+                Book book = lib.giveBook(info[3]);
+                if(staff.canBorrow()&& book.canborrow()){
                     lib.borrowBookStaff(book,staff,info[4],info[5],dataHolder);
                     System.out.println("success");
                 }
@@ -683,10 +973,10 @@ public class Main {
                 }
 
 
-            } else if (lib.checkThesisInLibrary(info[3])) {
-                if(staff.canBorrow()){
-                    Thesis thesis = lib.giveThesis(info[3]);
-                    lib.borrowThesisStaff(thesis,staff,info[4], info [5]);
+            } else if (!lib.checkThesisInLibrary(info[3])) {
+                Thesis thesis = lib.giveThesis(info[3]);
+                if(staff.canBorrow()&& thesis.canBorrow()){
+                    lib.borrowThesisStaff(thesis,staff,info[4], info [5],dataHolder);
                     System.out.println("success");
                 }
                 else{
@@ -700,7 +990,6 @@ public class Main {
         }
 
     }
-
     private static void removeStaff(String order, DataHolder dataHolder) {
         String[] id = order.split("\\#");
         if(!dataHolder.checkStaffExist(id[1])){
@@ -708,6 +997,10 @@ public class Main {
             return;
         }
         Staff staff = dataHolder.getStaff(id[1]);
+        if((staff.inborrow!=0)||staff.penalty!=0){
+            System.out.println("not-allowed");
+            return;
+        }
         dataHolder.removeStaff(staff);
         System.out.println("success");
     }
@@ -743,6 +1036,10 @@ public class Main {
             return;
         }
         Student student = dataHolder.getStudent(id[1]);
+        if((student.borrow!=0)||student.penalty!=0){
+            System.out.println("not-allowed");
+            return;
+        }
         dataHolder.removeStudent(student);
         System.out.println("success");
     }
@@ -778,7 +1075,7 @@ public class Main {
             Library lib = dataHolder.IdTolibrary.get(info[1]);
             if(!lib.checkThesisInLibrary(id[1])){
                 Thesis thesis = lib.giveThesis(id[1]);
-                if(!thesis.canBorrow){
+                if(thesis.canBorrow){
                     thesis.remove(thesis);
                     System.out.println("success");
                 }
@@ -869,7 +1166,7 @@ public class Main {
             System.out.println("not-found");
             return;
         }
-        if (!dataHolder.checkCategoryExist(info[info.length-1])){
+        if (!dataHolder.checkCategoryExist(info[info.length-1])&&!info[info.length-1].equals("-")){
             System.out.println("not-found");
             return;
         }
@@ -885,6 +1182,10 @@ public class Main {
             Library lib= dataHolder.IdTolibrary.get(info[1]);
             if(!lib.checkBookInLibrary(id[1])){
                 Book book = lib.giveBook(id[1]);
+                if(book.inborrow!=0){
+                    System.out.println("not-allowed");
+                    return;
+                }
                 book.bookcategory.removebook(book);
                 lib.removeBookFromLibrary(id[1]);
                 System.out.println("success");
