@@ -1,777 +1,6 @@
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Scanner;
-class Library {
-    String id;
-    String name ;
-    String year;
-    String numberOfDesk;
-    String address;
-    // an array list store books id
-    public ArrayList <String> booksId = new ArrayList<>();
-
-    //an array list store books
-    public ArrayList <Book> books = new ArrayList<>();
-    // a hashmap store id to books
-    HashMap<String,Book> Idtobooks = new HashMap<>();
-    // a list of thesis in library
-    ArrayList <Thesis> thesises = new ArrayList<>();
-    //a hashmap store id to thesises
-    HashMap <String,Thesis> idtothesises = new HashMap<>();
-    ArrayList<Book> booksinborrow = new ArrayList<>();
-    ArrayList <Thesis> thesisInBorrow = new ArrayList<>();
-
-    Library(String id,String name,String year,String numberOfDesk,String address){
-        this.id=id;
-        this.name=name;
-        this.year=year;
-        this.numberOfDesk=numberOfDesk;
-        this.address=address;
-    }
-
-    public String getId() {
-        return id;
-    }
-    //if book didn't exist return true
-    public boolean checkBookInLibrary(String id){
-        return !booksId.contains(id);
-    }
-    public void addBook(String Id, String name, String author, String publisher , String year, int  number,
-                        category bookcategory, Library library){
-        booksId.add(Id);
-        Book newbook= new Book(Id,name,author,publisher,year,number,bookcategory,library);
-        books.add(newbook);
-        Idtobooks.put(Id,newbook);
-        bookcategory.setBooks(newbook);
-    }
-
-    public void removeBookFromLibrary(String bookId) {
-        books.remove(Idtobooks.get(bookId));
-        booksId.remove(bookId);
-        Idtobooks.remove(bookId);
-    }
-
-    public Book giveBook(String id) {
-        return Idtobooks.get(id);
-    }
-
-    public void addThesis(String Id, String name, String writer, String profossor , int  year,
-                          category bookcategory, Library library, DataHolder dataHolder)
-    {
-        Thesis newthesis= new Thesis(Id,name,writer,profossor,year,bookcategory,library);
-        thesises.add(newthesis);
-        idtothesises.put(Id,newthesis);
-        bookcategory.setTheses(newthesis);
-
-
-    }
-
-    public boolean checkThesisInLibrary(String id) {
-        if(idtothesises.containsKey(id)){
-            return false;
-        }
-        else {
-            return true;
-        }
-    }
-
-    public Thesis giveThesis(String id) {
-        return idtothesises.get(id);
-    }
-
-    public void borrowBookStudent(Book book, Student student, String date, String time, DataHolder dataHolder) {
-        String[] fulldate = date.split("\\-");
-        String[] fulltime= time.split("\\:");
-        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
-                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        booksinborrow.add(book);
-        BorrowBook borrowBook = new BorrowBook(dateTime,book,student);
-        book.addinrent();
-        student.borrow++;
-        student.borrowedBookadd(book);
-        dataHolder.setBorrowbook(book,borrowBook);
-    }
-
-    public void borrowThesisStudent(Thesis thesis, Student student, String date, String time, DataHolder dataHolder)
-    {
-        String[] fulldate = date.split("\\-");
-        String[] fulltime= time.split("\\:");
-        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
-                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        thesisInBorrow.add(thesis);
-        thesis.canBorrow=false;
-        student.borrow++;
-        ThesisBorrow thesisBorrow = new ThesisBorrow(dateTime,thesis,student);
-        dataHolder.addThesisBorrow(thesis,thesisBorrow);
-        student.thesesinBorrow.add(thesis);
-    }
-
-    public void borrowBookStaff(Book book, Staff staff, String date, String time, DataHolder dataHolder) {
-        String[] fulldate = date.split("\\-");
-        String[] fulltime= time.split("\\:");
-        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
-                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        booksinborrow.add(book);
-        BorrowBook borrowBook = new BorrowBook(dateTime,book,staff);
-        book.addinrent();
-        staff.inborrow++;
-        dataHolder.setBorrowbook(book,borrowBook);
-        staff.borrowedBookadd(book);
-
-    }
-
-    public void borrowThesisStaff(Thesis thesis, Staff staff, String date, String time, DataHolder dataHolder) {
-        String[] fulldate = date.split("\\-");
-        String[] fulltime= time.split("\\:");
-        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
-                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        thesisInBorrow.add(thesis);
-        thesis.canBorrow=false;
-        staff.inborrow++;
-        ThesisBorrow thesisBorrow = new ThesisBorrow(dateTime,thesis,staff);
-        dataHolder.addThesisBorrow(thesis,thesisBorrow);
-        staff.thesesinBorrow.add(thesis);
-
-    }
-
-    public void returnBookStudent(Book book, Student student, String date, String time, DataHolder dataHolder) {
-        String[] fulldate = date.split("\\-");
-        String[] fulltime= time.split("\\:");
-        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
-                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        booksinborrow.remove(book);
-        book.removeFromRent();
-        student.borrow--;
-        student.borrowedBookremove(book);
-        dataHolder.removeBorrowBookStudent(book,student,dateTime);
-    }
-
-    public void returnThesisStudent(Thesis thesis, Student student, String date, String time, DataHolder dataHolder) {
-        String[] fulldate = date.split("\\-");
-        String[] fulltime= time.split("\\:");
-        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
-                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        thesisInBorrow.remove(thesis);
-        thesis.canBorrow=true;
-        student.borrow--;
-        student.thesesinBorrow.remove(thesis);
-        dataHolder.removeBorrowThesisStudent(thesis,student,dateTime);
-    }
-
-    public void returnBookStaff(Book book, Staff staff, String date, String time, DataHolder dataHolder) {
-        String[] fulldate = date.split("\\-");
-        String[] fulltime= time.split("\\:");
-        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
-                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        booksinborrow.remove(book);
-        book.removeFromRent();
-        staff.inborrow--;
-        staff.borrowedBookremove(book);
-        dataHolder.removeBorrowBookStaff(book,staff,dateTime);
-    }
-
-    public void returnThesisStaff(Thesis thesis, Staff staff, String date, String time, DataHolder dataHolder) {
-        String[] fulldate = date.split("\\-");
-        String[] fulltime= time.split("\\:");
-        LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
-                Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
-        thesisInBorrow.remove(thesis);
-        thesis.canBorrow=true;
-        staff.inborrow--;
-        staff.thesesinBorrow.remove(thesis);
-        dataHolder.removeBorrowThesisStaff(thesis,staff,dateTime);
-    }
-}
-class DataHolder{
-    //reaching from library id to the library his self
-    public HashMap <String,Library> IdTolibrary = new HashMap<>();
-    //a list of all library
-    public ArrayList<Library> libraries = new ArrayList<>();
-    // reaching from a category id to category him self
-    public HashMap <String,category> categoryIDtoName = new HashMap<>();
-    // reaching from a name of category to the category him self
-    public HashMap <String,category> NametoCategory = new HashMap<>();
-    //null category
-    category nullcategory = new category(null,null);
-    // a hashmap store id and student
-    private HashMap<String,Student> IdtoStudent = new HashMap<>();
-    // a list of Students
-    private ArrayList<Student> students = new ArrayList<>();
-    // a hashmap store id and student
-    private HashMap<String,Staff> IdtoStaffe = new HashMap<>();
-    // a list of Students
-    private ArrayList<Staff> staffes = new ArrayList<>();
-
-    private HashMap<String,ArrayList<BorrowBook>> IdBorrowBook = new HashMap<>();
-    private HashMap<String,ArrayList<ThesisBorrow>> IdBorrowThesis = new HashMap<>();
-
-    public void setLibraries(Library newLibrary) {
-        libraries.add(newLibrary);
-    }
-
-    public void setIdTolibrary(String Id,Library NewLibrary) {
-        IdTolibrary.put(Id,NewLibrary);
-    }
-
-    public void setCategoryIDtoName(String id,category newCategory) {
-        categoryIDtoName.put(id,newCategory);
-    }
-    public boolean checkLibraryExist(String id){
-        return IdTolibrary.get(id) != null;
-    }
-
-    public boolean checkCategoryExist(String id) {
-        if((categoryIDtoName.get(id) != null)||(id.equals("null"))){
-            return true;
-        }
-        else return false;
-    }
-
-
-    public boolean checkStudentExist(String id) {
-        if(IdtoStudent.containsKey(id)){
-            return true;
-        }
-        return false;
-    }
-
-    public void addStudent(Student student, String id) {
-        IdtoStudent.put(id,student);
-        students.add(student);
-    }
-
-    public Student getStudent(String id) {
-        return IdtoStudent.get(id);
-    }
-
-    public void removeStudent(Student student) {
-        students.remove(student);
-        IdtoStudent.remove(student.getId(student));
-    }
-    public boolean checkStaffExist(String id) {
-        if(IdtoStaffe.containsKey(id)){
-            return true;
-        }
-        return false;
-    }
-
-    public void addStaff(Staff staff, String id) {
-        IdtoStaffe.put(id,staff);
-        staffes.add(staff);
-    }
-
-    public Staff getStaff(String id) {
-        return IdtoStaffe.get(id);
-    }
-
-    public void removeStaff(Staff staff) {
-        staffes.remove(staff);
-        IdtoStaffe.remove(staff.getId(staff));
-    }
-
-    public void setBorrowbook(Book book, BorrowBook borrowBook) {
-        if(IdBorrowBook.containsKey(book.Id)){
-            IdBorrowBook.get(book.Id).add(borrowBook);
-        }
-        else{
-            IdBorrowBook.put(book.Id,new ArrayList<BorrowBook>());
-            IdBorrowBook.get(book.Id).add(borrowBook);
-
-        }
-    }
-
-    public void addThesisBorrow(Thesis thesis,ThesisBorrow thesisBorrow) {
-        if(IdBorrowThesis.containsKey(thesis.id)){
-            IdBorrowThesis.get(thesis.id).add(thesisBorrow);
-        }
-        else{
-            IdBorrowThesis.put(thesis.id,new ArrayList<ThesisBorrow>());
-            IdBorrowThesis.get(thesis.id).add(thesisBorrow);
-
-        }
-    }
-
-    public void removeBorrowBookStudent(Book book, Student student, LocalDateTime dateTime) {
-        ArrayList<BorrowBook> borrowBooks = IdBorrowBook.get(book.Id);
-        long hours=1000 ;
-        BorrowBook borrowBooktarget = null;
-        for(BorrowBook i : borrowBooks){
-            if(i.getStudent()!=null){
-                if((i.getStudent().equals(student))&&(i.getBook().library.equals(book.library))&&
-                        (Duration.between(i.getBorrowDate(),dateTime)).toHours()>=0){
-                    if((Duration.between(i.getBorrowDate(),dateTime)).toHours()<hours){
-                        hours=(Duration.between(i.getBorrowDate(),dateTime)).toHours();
-                        borrowBooktarget=i;
-                    }
-                }
-            }
-
-        }
-        borrowBooks.remove(borrowBooktarget);
-        if(IdBorrowBook.get(book.Id).isEmpty()){
-            IdBorrowBook.remove(book.Id);
-        }
-        if(hours>240){
-            long penalty= (hours-240)*50;
-            student.penalty=+ penalty;
-            System.out.println(penalty);
-        }
-        else {
-            System.out.println("success");
-        }
-    }
-
-    public void removeBorrowThesisStudent(Thesis thesis, Student student, LocalDateTime dateTime) {
-        ArrayList<ThesisBorrow> thesisBorrows = IdBorrowThesis.get(thesis.id);
-        long hours=1000 ;
-        ThesisBorrow thesisBorrowtarget = null;
-        for(ThesisBorrow i : thesisBorrows){
-            if(i.getStudent()!=null){
-                if(i.getStudent().equals(student)&&i.getThesis().library.equals(thesis.library)&&
-                        (Duration.between(i.getBorrowDate(),dateTime)).toHours()>=0){
-                    if((Duration.between(i.getBorrowDate(),dateTime)).toHours()<hours){
-                        hours=(Duration.between(i.getBorrowDate(),dateTime)).toHours();
-                        thesisBorrowtarget=i;
-                    }
-                }
-            }
-
-        }
-        thesisBorrows.remove(thesisBorrowtarget);
-        if(IdBorrowThesis.get(thesis.id).isEmpty()){
-            IdBorrowThesis.remove(thesis.id);
-        }
-
-        if(hours>168){
-            long penalty= (hours-168)*50;
-            student.penalty=+ penalty;
-
-            System.out.println(penalty);
-        }
-        else {
-            System.out.println("success");
-        }
-    }
-
-    public void removeBorrowBookStaff(Book book, Staff staff, LocalDateTime dateTime) {
-        ArrayList<BorrowBook> borrowBooks = IdBorrowBook.get(book.Id);
-        long hours=1000 ;
-        BorrowBook borrowBooktarget = null;
-        for(BorrowBook i : borrowBooks){
-            if(i.getStaff()!=null){
-                if(i.getStaff().equals(staff)&&i.getBook().library.equals(book.library)&&
-                        (Duration.between(i.getBorrowDate(),dateTime)).toHours()>0){
-                    if((Duration.between(i.getBorrowDate(),dateTime)).toHours()<hours){
-                        hours=(Duration.between(i.getBorrowDate(),dateTime)).toHours();
-                        borrowBooktarget=i;
-                    }
-                }
-            }
-
-        }
-        borrowBooks.remove(borrowBooktarget);
-        if(IdBorrowBook.get(book.Id).isEmpty()){
-            IdBorrowBook.remove(book.Id);
-        }
-        if(hours>336){
-            long penalty= (hours-336)*100;
-            staff.penalty=+ penalty;
-
-            System.out.println(penalty);
-        }
-        else {
-            System.out.println("success");
-        }
-    }
-
-    public void removeBorrowThesisStaff(Thesis thesis, Staff staff, LocalDateTime dateTime) {
-        ArrayList<ThesisBorrow> thesisBorrows = IdBorrowThesis.get(thesis.id);
-        long hours=1000 ;
-        ThesisBorrow thesisBorrowtarget = null;
-        for(ThesisBorrow i : thesisBorrows){
-            if(i.getStaff()!=null){
-                if(i.getStaff().equals(staff)&&i.getThesis().library.equals(thesis.library)&&
-                        (Duration.between(i.getBorrowDate(),dateTime)).toHours()>=0){
-                    if((Duration.between(i.getBorrowDate(),dateTime)).toHours()<hours){
-                        hours=(Duration.between(i.getBorrowDate(),dateTime)).toHours();
-                        thesisBorrowtarget=i;
-                    }
-                }
-            }
-
-        }
-        thesisBorrows.remove(thesisBorrowtarget);
-        if(IdBorrowThesis.get(thesis.id).isEmpty()){
-            IdBorrowThesis.remove(thesis.id);
-        }
-
-        if(hours>240){
-            long penalty= (hours-240)*100;
-            staff.penalty=+ penalty;
-
-            System.out.println(penalty);
-        }
-        else {
-            System.out.println("success");
-        }
-    }
-}
-
-class BorrowBook{
-    private LocalDateTime borrowDate;
-    private Book book;
-    private Student student= null;
-    private Staff staff = null;
-
-    BorrowBook(LocalDateTime borrowDate,Book book,Student student){
-        this.borrowDate=borrowDate;
-        this.student=student;
-        this.book=book;
-    }
-    BorrowBook(LocalDateTime borrowDate,Book book,Staff staff){
-        this.borrowDate=borrowDate;
-        this.staff=staff;
-        this.book=book;
-    }
-
-    public LocalDateTime getBorrowDate() {
-        return borrowDate;
-    }
-    public Book getBook (){
-        return book;
-    }
-
-    public Object getStudent() {
-        return student;
-    }
-
-    public Object getStaff() {
-        return staff;
-    }
-}
-class category {
-    String id;
-    String name;
-    ArrayList <Book> books = new ArrayList<>();
-    ArrayList <Thesis> theses = new ArrayList<>();
-    category(String id,String name ){
-        this.id=id;
-        this.name=name;
-    }
-
-    public void setBooks(Book book) {
-
-        books.add(book);
-    }
-    public void removebook(Book book){
-        books.remove(book);
-    }
-
-    public void setTheses(Thesis thesis) {
-        theses.add(thesis);
-    }
-    public void removeTheses(Thesis thesis) {
-        theses.remove(thesis);
-    }
-}
-class Book{
-    String Id;
-    String name;
-    String author;
-    String publisher;
-    String year;
-    int number;
-    category bookcategory;
-    Library library;
-    int inborrow = 0;
-    Book(String Id,String name,String author,String publisher,String year,int number,category bookcategory,Library library){
-        this.Id=Id;
-        this.name=name;
-        this.author=author;
-        this.publisher=publisher;
-        this.year=year;
-        this.number=number;
-        this.bookcategory=bookcategory;
-        this.library=library;
-    }
-
-
-    public void edit(String[] info,Book book,DataHolder dataHolder) {
-        if(!info[2].equals("-")){
-            book.name=info[2];
-        }
-        if(!info[3].equals("-")){
-            book.author=info[3];
-        }
-        if(!info[4].equals("-")){
-            book.publisher=info[4];
-        }
-        if(!info[5].equals("-")){
-            book.year=info[5];
-        }
-        if(!info[6].equals("-")){
-            book.number=Integer.parseInt(info[6]);
-        }
-        if(!info[7].equals("-")){
-            if(info[7].equals("null")){
-                book.bookcategory.removebook(book);
-                book.bookcategory= dataHolder.nullcategory;
-                dataHolder.nullcategory.setBooks(book);
-            }
-            else{
-                book.bookcategory.removebook(book);
-                book.bookcategory=dataHolder.categoryIDtoName.get(info[7]);
-                bookcategory.setBooks(book);
-            }
-        }
-    }
-
-    public void addinrent() {
-        inborrow++;
-    }
-
-    public boolean canborrow() {
-        return inborrow<number;
-    }
-
-    public void removeFromRent() {
-        inborrow--;
-    }
-}
-class Thesis {
-    String id;
-    String name;
-    String writer;
-    String professor;
-    int year ;
-    category theiscategory;
-    Library library;
-    boolean canBorrow=true;
-
-    Thesis(String id, String name, String writer, String professor, int year, category theiscategory, Library library){
-        this.id=id;
-        this.name=name;
-        this.writer=writer;
-        this.professor=professor;
-        this.year=year;
-        this.theiscategory=theiscategory;
-        this.library=library;
-    }
-
-    public void edit(String[] info, Thesis thesis, DataHolder dataHolder) {
-        if (!info[2].equals("-")) {
-            name = info[2];
-        }
-        if (!info[3].equals("-")) {
-            writer = info[3];
-        }
-        if (!info[4].equals("-")) {
-            professor = info[4];
-        }
-        if (!info[5].equals("-")) {
-            year = Integer.parseInt(info[5]);
-        }
-        if (!info[6].equals("-")) {
-            if(info[6].equals("null")){
-                theiscategory.removeTheses(thesis);
-                theiscategory = dataHolder.nullcategory;
-                dataHolder.nullcategory.setTheses(thesis);
-
-            }
-            else {
-                theiscategory.removeTheses(thesis);
-                theiscategory =dataHolder.categoryIDtoName.get(info[6]);
-                theiscategory.setTheses(thesis);
-            }
-        }
-
-    }
-
-    public void remove(Thesis thesis) {
-        theiscategory.removeTheses(thesis);
-        library.idtothesises.remove(id);
-        library.thesises.remove(thesis);
-    }
-
-    public boolean canBorrow() {
-        return canBorrow;
-    }
-}
-class Student{
-    String Id;
-    String password;
-    String name,family;
-    String nationalCode;
-    int year;
-    String address;
-    int borrow=0 ;
-    public long penalty = 0;
-    ArrayList<Book> bookinborrow = new ArrayList<>();
-    ArrayList<Thesis> thesesinBorrow = new ArrayList<>();
-
-    Student(String Id,String password,String name,String family,String nationalCode,int year,String address){
-        this.Id=Id;
-        this.password=password;
-        this.name=name;
-        this.family=family;
-        this.nationalCode=nationalCode;
-        this.year=year;
-        this.address=address;
-    }
-
-
-    public void edit(String[] info) {
-        if (!info[1].equals("-")) {
-            password = info[1];
-        }
-        if (!info[2].equals("-")) {
-            name = info[2];
-        }
-        if (!info[3].equals("-")) {
-            family = info[3];
-        }
-        if (!info[4].equals("-")) {
-            nationalCode = info[4];
-        }
-        if (!info[5].equals("-")) {
-            year = Integer.parseInt(info[5]);
-        }
-        if (!info[6].equals("-")) {
-            address = (info[6]);
-        }
-    }
-
-    public String getId(Student student) {
-        return student.Id;
-    }
-
-    public boolean checkpass(String pass) {
-        return pass.equals(password);
-    }
-
-    public boolean canBorrow(Student student) {
-        return borrow<3;
-    }
-
-    public void borrowedBookadd(Book book) {
-        bookinborrow.add(book);
-    }
-
-    public boolean checkBorrow(Book book) {
-        return bookinborrow.contains(book);
-    }
-
-    public void borrowedBookremove(Book book) {
-        bookinborrow.remove(book);
-    }
-
-    public boolean checkBorrow(Thesis thesis) {
-        return thesesinBorrow.contains(thesis);
-    }
-}
-
-class Staff{
-    String Id;
-    String password;
-    String name,family;
-    String nationalCode;
-    int year;
-    String address;
-    public int inborrow=0;
-    public long penalty = 0;
-    ArrayList<Book> borrowBook = new ArrayList<>();
-    ArrayList <Thesis> thesesinBorrow = new ArrayList<>();
-    Staff(String Id,String password,String name,String family,String nationalCode,int year,String address){
-        this.Id=Id;
-        this.password=password;
-        this.name=name;
-        this.family=family;
-        this.nationalCode=nationalCode;
-        this.year=year;
-        this.address=address;
-    }
-    public void edit(String[] info) {
-        if (!info[1].equals("-")) {
-            password = info[1];
-        }
-        if (!info[2].equals("-")) {
-            name = info[2];
-        }
-        if (!info[3].equals("-")) {
-            family = info[3];
-        }
-        if (!info[4].equals("-")) {
-            nationalCode = info[4];
-        }
-        if (!info[5].equals("-")) {
-            year = Integer.parseInt(info[5]);
-        }
-        if (!info[6].equals("-")) {
-            address = (info[6]);
-        }
-    }
-
-    public String getId(Staff staff) {
-        return staff.Id;
-    }
-
-    public boolean checkpass(String pass) {
-        return pass.equals(password);
-    }
-
-    public boolean canBorrow() {
-        return inborrow<5;
-    }
-
-    public void borrowedBookadd(Book book) {
-        borrowBook.add(book);
-    }
-
-    public boolean checkBorrow(Book book) {
-        return borrowBook.contains(book);
-    }
-
-    public void borrowedBookremove(Book book) {
-        borrowBook.remove(book);
-    }
-
-    public boolean checkBorrow(Thesis thesis) {
-        return thesesinBorrow.contains(thesis);
-    }
-}
-class ThesisBorrow{
-    Thesis thesis;
-    Student student;
-    Staff staff;
-    LocalDateTime borrowDate;
-    ThesisBorrow (LocalDateTime borrowDate,Thesis thesis,Student student){
-        this.borrowDate=borrowDate;
-        this.student=student;
-        this.thesis=thesis;
-    }
-    ThesisBorrow(LocalDateTime borrowDate,Thesis thesis,Staff staff){
-        this.borrowDate=borrowDate;
-        this.staff=staff;
-        this.thesis= thesis;
-    }
-
-    public LocalDateTime getBorrowDate() {
-        return borrowDate;
-    }
-    public Thesis getThesis (){
-        return thesis;
-    }
-
-    public Object getStudent() {
-        return student;
-    }
-
-    public Object getStaff() {
-        return staff;
-    }
-}
+import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
@@ -823,6 +52,142 @@ public class Main {
             borrow(order,dataHolder);
         } else if (order.startsWith("return")) {
             BorrowReturn(order,dataHolder);
+        } else if (order.startsWith("search-user")) {
+            searchUser(order,dataHolder);
+        } else if (order.startsWith("search")) {
+            searching(order,dataHolder);
+        } else if (order.startsWith("category-report")){
+            categoryreport(order,dataHolder);
+        } else if(order.startsWith("library-report")){
+            libraryReport(order,dataHolder);
+        } else if(order.startsWith("report-passed-deadline")){
+            reportPassedDeadline(order,dataHolder);
+        } else if(order.equals("report-penalties-sum")){
+            dataHolder.reportPenalties();
+        }
+    }
+
+
+
+    private static void reportPassedDeadline(String order, DataHolder dataHolder) {
+        String[] info = order.split("\\|");
+        String[] id = info[0].split("\\#");
+        if(dataHolder.checkLibraryExist(id[1])){
+            Library library = dataHolder.getIdTolibrary().get(id[1]);
+            String[] fulldate = info[1].split("\\-");
+            String[] fulltime= info[2].split("\\:");
+            LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(fulldate[0]),Integer.parseInt(fulldate[1]),
+                    Integer.parseInt(fulldate[2]),Integer.parseInt(fulltime[0]),Integer.parseInt(fulltime[1]));
+            library.report(dateTime,dataHolder,library);
+        }
+        else {
+            System.out.println("not-found");
+        }
+    }
+
+    private static void libraryReport(String order, DataHolder dataHolder) {
+        String[] id= order.split("\\#");
+        if(dataHolder.checkLibraryExist(id[1])){
+            Library library = dataHolder.getIdTolibrary().get(id[1]);
+            int booknum=0;
+            for(Book i: library.getBooks()){
+                booknum+= i.getNumber();
+            }
+            System.out.println(booknum+" "+library.getThesises().size()+" "+library.getBooksinborrow().size()
+                    +" "+library.getThesisInBorrow().size());
+        }
+        else {
+            System.out.println("not-found");
+        }
+    }
+
+    private static void categoryreport(String order, DataHolder dataHolder) {
+        String[] word = order.split("\\#");
+        if((dataHolder.checkCategoryExist(word[1]))||word[1].equals("null")){
+            category categorytarget ;
+            if(word[1].equals("null")){
+                categorytarget=dataHolder.getNullcategory();
+            }
+            else {
+                categorytarget=dataHolder.giveCategory(word[1]);
+            }
+            int booknum = 0;
+            for(Book i : categorytarget.getBooks()){
+                booknum += i.getNumber();
+            }
+            System.out.println(booknum+" "+ categorytarget.getTheses().size());
+        }
+        else{
+            System.out.println("not-found");
+        }
+    }
+
+    private static void searchUser(String order, DataHolder dataHolder) {
+        String[] info = order.split("\\|");
+        String[] id = info[0].split("\\#");
+        ArrayList<String> result = new ArrayList<>();
+        if(dataHolder.checkStudentExist(id[1])){
+            Student student = dataHolder.getStudent(id[1]);
+            if(!student.checkpass(info[1])){
+                System.out.println("invalid-pass");
+                return;
+            }
+            result = dataHolder.searchinguser(info[2]);
+            printingResult(result);
+        }
+        //staff check
+        else if (dataHolder.checkStaffExist(id[1])) {
+            Staff staff = dataHolder.getStaff(id[1]);
+            if(!staff.checkpass(info[1])){
+                System.out.println("invalid-pass");
+                return;
+            }
+            result = dataHolder.searchinguser(info[2]);
+            printingResult(result);
+        }
+        else {
+            System.out.println("not-found");
+        }
+    }
+
+
+
+
+
+    private static void searching(String order, DataHolder dataHolder) {
+        String[] word = order.split("\\#");
+        String searchword = word[1].toLowerCase();
+        ArrayList<String> result = new ArrayList<>();
+        for(Library i : dataHolder.getLibraries()){
+            result.addAll(i.searchInlibrary(searchword));
+        }
+        result = removeDuplicate(result);
+        printingResult(result);
+    }
+
+    private static ArrayList<String> removeDuplicate(ArrayList<String> result) {
+        ArrayList<String > newres = new ArrayList<>();
+        for(String i : result){
+            if(!newres.contains(i)){
+                newres.add(i);
+            }
+        }
+        return newres;
+    }
+
+    private static void printingResult(ArrayList<String> result) {
+        if(result.isEmpty()){
+            System.out.println("not-found");
+        }
+        else {
+            Collections.sort(result);
+            for(int i = 0 ; i< result.size();i++){
+                System.out.print(result.get(i));
+                if(i!= result.size()-1){
+                    System.out.print("|");
+                }
+            }
+            System.out.println();
         }
     }
 
@@ -839,7 +204,7 @@ public class Main {
                 System.out.println("not-found");
                 return;
             }
-            Library lib = dataHolder.IdTolibrary.get(info[2]);
+            Library lib = dataHolder.getIdTolibrary().get(info[2]);
             if (lib.checkThesisInLibrary(info[3]) && lib.checkBookInLibrary(info[3])) {
                 System.out.println("not-found");
                 return;
@@ -873,7 +238,7 @@ public class Main {
                 System.out.println("not-found");
                 return;
             }
-            Library lib = dataHolder.IdTolibrary.get(info[2]);
+            Library lib = dataHolder.getIdTolibrary().get(info[2]);
             if (lib.checkThesisInLibrary(info[3]) && lib.checkBookInLibrary(info[3])) {
                 System.out.println("not-found");
                 return;
@@ -917,7 +282,7 @@ public class Main {
                 System.out.println("not-found");
                 return;
             }
-            Library lib = dataHolder.IdTolibrary.get(info[2]);
+            Library lib = dataHolder.getIdTolibrary().get(info[2]);
             if(lib.checkThesisInLibrary(info[3]) && lib.checkBookInLibrary(info[3])){
                 System.out.println("not-found");
                 return;
@@ -957,7 +322,7 @@ public class Main {
                 System.out.println("not-found");
                 return;
             }
-            Library lib = dataHolder.IdTolibrary.get(info[2]);
+            Library lib = dataHolder.getIdTolibrary().get(info[2]);
             if(lib.checkThesisInLibrary(info[3]) && lib.checkBookInLibrary(info[3])){
                 System.out.println("not-found");
                 return;
@@ -997,7 +362,7 @@ public class Main {
             return;
         }
         Staff staff = dataHolder.getStaff(id[1]);
-        if((staff.inborrow!=0)||staff.penalty!=0){
+        if((staff.getInborrow()!=0)||staff.getPenalty()!=0){
             System.out.println("not-allowed");
             return;
         }
@@ -1036,7 +401,7 @@ public class Main {
             return;
         }
         Student student = dataHolder.getStudent(id[1]);
-        if((student.borrow!=0)||student.penalty!=0){
+        if((student.getinborrow()!=0)||student.getPenalty()!=0){
             System.out.println("not-allowed");
             return;
         }
@@ -1072,12 +437,16 @@ public class Main {
         String[] info = order.split("\\|");
         String[] id = info[0].split("\\#");
         if(dataHolder.checkLibraryExist(info[1])){
-            Library lib = dataHolder.IdTolibrary.get(info[1]);
+            Library lib = dataHolder.getIdTolibrary().get(info[1]);
             if(!lib.checkThesisInLibrary(id[1])){
                 Thesis thesis = lib.giveThesis(id[1]);
-                if(thesis.canBorrow){
+                if(thesis.getCanborrow()){
                     thesis.remove(thesis);
                     System.out.println("success");
+                }
+                else {
+                    System.out.println("not-allowed");
+                    return;
                 }
             }
             else{
@@ -1093,7 +462,7 @@ public class Main {
         String[] info = order.split("\\|");
         String[] id = info[0].split("\\#");
         if(dataHolder.checkLibraryExist(info[1])){
-            Library lib = dataHolder.IdTolibrary.get(info[1]);
+            Library lib = dataHolder.getIdTolibrary().get(info[1]);
             if(dataHolder.checkCategoryExist(info[info.length-1])){
                 if (!lib.checkThesisInLibrary(id[1])){
                     Thesis thesis = lib.giveThesis(id[1]);
@@ -1118,16 +487,16 @@ public class Main {
         String[] info = order.split("\\|");
         String[] id = info[0].split("\\#");
         if(dataHolder.checkLibraryExist(info[info.length-1])){
-            Library lib= dataHolder.IdTolibrary.get(info[info.length-1]);
+            Library lib= dataHolder.getIdTolibrary().get(info[info.length-1]);
             if(lib.checkThesisInLibrary(id[1])){
                 if(info[info.length-2].equals("null")){
                     lib.addThesis(id[1],info[1],info[2],info[3],Integer.parseInt(info[4]),
-                            dataHolder.nullcategory,lib,dataHolder );
+                            dataHolder.getNullcategory(),lib,dataHolder );
                     System.out.println("success");
 
                 } else if (dataHolder.checkCategoryExist(info[info.length-2])) {
                     lib.addThesis(id[1],info[1],info[2],info[3],Integer.parseInt(info[4]),
-                            dataHolder.categoryIDtoName.get(info[5]),lib,dataHolder );
+                            dataHolder.getCategoryIDtoName().get(info[5]),lib,dataHolder );
                     System.out.println("success");
                 }
                 else {
@@ -1152,7 +521,7 @@ public class Main {
             System.out.println("not-found");
             return;
         }
-        Library lib = dataHolder.IdTolibrary.get(info[1]);
+        Library lib = dataHolder.getIdTolibrary().get(info[1]);
         if (lib == null) {
             System.out.println("not-found");
             return;
@@ -1178,15 +547,15 @@ public class Main {
     private static void removeBook(String order, DataHolder dataHolder) {
         String[] info = order.split("\\|");
         String[] id = info[0].split("\\#");
-        if(dataHolder.IdTolibrary.containsKey(info[1])){
-            Library lib= dataHolder.IdTolibrary.get(info[1]);
+        if(dataHolder.getIdTolibrary().containsKey(info[1])){
+            Library lib= dataHolder.getIdTolibrary().get(info[1]);
             if(!lib.checkBookInLibrary(id[1])){
                 Book book = lib.giveBook(id[1]);
-                if(book.inborrow!=0){
+                if(book.getInborrow()!=0){
                     System.out.println("not-allowed");
                     return;
                 }
-                book.bookcategory.removebook(book);
+                book.getBookcategory().removebook(book);
                 lib.removeBookFromLibrary(id[1]);
                 System.out.println("success");
             }
@@ -1203,22 +572,22 @@ public class Main {
         String[] info = order.split("\\|");
         String[] id = info[0].split("\\#");
         if (dataHolder.checkLibraryExist(info[info.length-1])) {
-            Library lib = dataHolder.IdTolibrary.get(info[info.length-1]);
+            Library lib = dataHolder.getIdTolibrary().get(info[info.length-1]);
             if (info[info.length - 2].equals("null")) {
-                if (dataHolder.IdTolibrary.get(info[info.length - 1]).checkBookInLibrary(id[1])) {
-                    dataHolder.IdTolibrary.get(info[info.length - 1]).addBook(id[1],
+                if (dataHolder.getIdTolibrary().get(info[info.length - 1]).checkBookInLibrary(id[1])) {
+                    dataHolder.getIdTolibrary().get(info[info.length - 1]).addBook(id[1],
                             info[1], info[2], info[3], info[4], Integer.parseInt(info[5]),
-                            dataHolder.nullcategory,lib);
+                            dataHolder.getNullcategory(),lib);
 
                     System.out.println("success");
                 } else {
                     System.out.println("duplicate-id");
                 }
             } else if (dataHolder.checkCategoryExist(info[info.length - 2])) {
-                if (dataHolder.IdTolibrary.get(info[info.length - 1]).checkBookInLibrary(id[1])) {
-                    dataHolder.IdTolibrary.get(info[info.length - 1]).addBook(id[1],
+                if (dataHolder.getIdTolibrary().get(info[info.length - 1]).checkBookInLibrary(id[1])) {
+                    dataHolder.getIdTolibrary().get(info[info.length - 1]).addBook(id[1],
                             info[1], info[2], info[3], info[4], Integer.parseInt(info[5]),
-                            dataHolder.categoryIDtoName.get(info[6]) ,lib);
+                            dataHolder.getCategoryIDtoName().get(info[6]) ,lib);
                     System.out.println("success");
 
                 } else {
@@ -1236,7 +605,7 @@ public class Main {
     private static void addcategory(String order, DataHolder dataHolder) {
         String[] info = order.split("\\|");
         String [] id = info[0].split("\\#");
-        if(!(dataHolder.categoryIDtoName.containsKey(id[1]))){
+        if(!(dataHolder.getCategoryIDtoName().containsKey(id[1]))){
             dataHolder.setCategoryIDtoName(id[1],new category(id[1],info[1]));
             System.out.println("success");
         }
@@ -1248,9 +617,9 @@ public class Main {
     private static void addLibrary(String order,DataHolder dataHolder) {
         String[] info = order.split("\\|");
         String[] id= info[0].split("\\#");
-        if(!(dataHolder.IdTolibrary.containsKey(id[1]))){
+        if(!(dataHolder.getIdTolibrary().containsKey(id[1]))){
             dataHolder.setLibraries(new Library(id[1],info[1],info[2],info[3],info[4]));
-            dataHolder.setIdTolibrary(id[1],dataHolder.libraries.get(dataHolder.libraries.size()-1));
+            dataHolder.setIdTolibrary(id[1],dataHolder.getLibraries().get(dataHolder.getLibraries().size()-1));
             System.out.println("success");
         }
         else{
